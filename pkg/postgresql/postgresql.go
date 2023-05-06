@@ -18,7 +18,7 @@ func DatabaseInit() {
 	var DB_PORT = os.Getenv("DB_PORT")
 
 	var err error
-	dsn := fmt.Sprintf("host=%s user=%s password=%s name=%s port=%s", DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", DB_HOST, DB_USER, DB_PASSWORD, DB_NAME, DB_PORT)
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
 	if err != nil {
