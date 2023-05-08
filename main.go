@@ -25,7 +25,6 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.POST, echo.PATCH, echo.DELETE},
 		AllowHeaders: []string{"X-Requested-With", "Content-Type", "Authorization"},
 	}))
-
 	postgresql.DatabaseInit()
 	database.RunMigration()
 
@@ -35,7 +34,7 @@ func main() {
 
 	var port = os.Getenv("PORT")
 
-	fmt.Println("server running localhost:" + port)
+	fmt.Println("server running :" + port)
 	e.Logger.Fatal(e.Start(":" + port))
 
 }

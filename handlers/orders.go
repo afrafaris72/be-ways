@@ -205,7 +205,7 @@ func SendMail(status string, order models.Order) {
 
 		mailer := gomail.NewMessage()
 		mailer.SetHeader("From", CONFIG_SENDER_NAME)
-		mailer.SetHeader("To", "mfauzan.murtadho@gmail.com")
+		mailer.SetHeader("To", "afra.faris123@gmail.com")
 		mailer.SetHeader("Subject", "WaysGallery Order Payment")
 		mailer.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
     <html lang="en">
@@ -225,7 +225,7 @@ func SendMail(status string, order models.Order) {
 				<li>Price : %s</li>
 				<li>Status : %s approvement from vendor</li>
       </ul>
-			<h4>&copy; 2023. <a href="https://waysgallery.vercel.app">WaysGallery</a>.</h4>
+			<h4>&copy; 2023. <a href="https://linkvercel">WaysGallery</a>.</h4>
       </body>
     </html>`, order.Title, order.Description, order.StartDate, order.EndDate, price, status))
 
