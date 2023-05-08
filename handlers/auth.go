@@ -7,10 +7,9 @@ import (
 	dto "waysgallery/dto/result"
 	usersdto "waysgallery/dto/users"
 	"waysgallery/models"
-	"waysgallery/repositories"
-
 	"waysgallery/pkg/bcrypt"
 	jwtToken "waysgallery/pkg/jwt"
+	"waysgallery/repositories"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
@@ -72,16 +71,15 @@ func (h *handlerAuth) Register(c echo.Context) error {
 			Image:    "",
 			UserID:   registerResponse.ID,
 		}
-
 		_, err = h.ProfileRepository.CreateProfile(profile)
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 		}
-		return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Registration Success", Data: registerResponse})
-	} else {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: "Email Already Exist"})
-	}
 
+		return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Your registration is successful", Data: registerResponse})
+	} else {
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: "This email is already registered"})
+	}
 }
 
 func (h *handlerAuth) Login(c echo.Context) error {
@@ -89,6 +87,7 @@ func (h *handlerAuth) Login(c echo.Context) error {
 	if err := c.Bind(request); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	user := models.User{
 		Email:    request.Email,
 		Password: request.Password,
@@ -101,7 +100,7 @@ func (h *handlerAuth) Login(c echo.Context) error {
 
 	isValid := bcrypt.CheckPasswordHash(request.Password, user.Password)
 	if !isValid {
-		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: "Wrong Password"})
+		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: "wrong password"})
 	}
 
 	claims := jwt.MapClaims{}
@@ -110,7 +109,7 @@ func (h *handlerAuth) Login(c echo.Context) error {
 
 	token, errGenerateToken := jwtToken.GenerateToken(&claims)
 	if errGenerateToken != nil {
-		log.Panicln(errGenerateToken)
+		log.Println(errGenerateToken)
 		return echo.NewHTTPError(http.StatusUnauthorized)
 	}
 
@@ -122,12 +121,14 @@ func (h *handlerAuth) Login(c echo.Context) error {
 		Token:    token,
 	}
 
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Success Login", Data: loginResponse})
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "You have successfully logged in", Data: loginResponse})
 }
 
 func (h *handlerAuth) CheckAuth(c echo.Context) error {
 	userLogin := c.Get("userLogin")
 	userId := userLogin.(jwt.MapClaims)["id"].(float64)
+
 	user, _ := h.AuthRepository.CheckAuth(int(userId))
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Authentication was successfully", Data: user})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "The authentication was successfully examined", Data: user})
 }

@@ -9,7 +9,7 @@ import (
 type UserRepository interface {
 	FindUsers() ([]models.User, error)
 	GetUser(ID int) (models.User, error)
-	UpdateUser(User models.User) (models.User, error)
+	UpdateUser(user models.User) (models.User, error)
 	DeleteUser(user models.User) (models.User, error)
 }
 

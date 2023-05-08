@@ -55,16 +55,20 @@ func (h *handler) UpdateUser(c echo.Context) error {
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	user, err := h.UserRepository.GetUser(int(userId))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	if request.Name != "" {
 		user.Name = request.Name
 	}
+
 	if request.Email != "" {
 		user.Email = request.Email
 	}
+
 	if request.Password != "" {
 		user.Password = request.Password
 	}
@@ -75,7 +79,8 @@ func (h *handler) UpdateUser(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "User Update Success", Data: convertResponse(data)})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "User data updated successfully", Data: convertResponse(data)})
 }
 
 func (h *handler) DeleteUser(c echo.Context) error {
@@ -94,35 +99,41 @@ func (h *handler) DeleteUser(c echo.Context) error {
 			}
 			for _, art := range arts {
 				if art.ProfileID == profile.ID {
-					artDelete, err := h.ArtRepository.GetArt(art.ID)
+					artToDelete, err := h.ArtRepository.GetArt(art.ID)
 					if err != nil {
 						return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 					}
-					_, err = h.ArtRepository.DeleteArt(artDelete)
+
+					_, err = h.ArtRepository.DeleteArt(artToDelete)
 					if err != nil {
 						return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 					}
 				}
 			}
-			profileDelete, err := h.ProfileRepository.GetProfile(profile.ID)
+
+			profileToDelete, err := h.ProfileRepository.GetProfile(profile.ID)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 			}
-			_, err = h.ProfileRepository.DeleteProfile(profileDelete)
+
+			_, err = h.ProfileRepository.DeleteProfile(profileToDelete)
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 			}
 		}
 	}
+
 	user, err := h.UserRepository.GetUser(int(userId))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	data, err := h.UserRepository.DeleteUser(user)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Delete Success", Data: convertResponse(data)})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "User data deleted successfully", Data: convertResponse(data)})
 }
 
 func convertResponse(u models.User) usersdto.UserResponse {

@@ -12,7 +12,7 @@ type Profile struct {
 	UserID        int                  `json:"-"`
 	User          UserProfileResponse  `json:"user"`
 	CreatedAt     time.Time            `json:"-"`
-	UpdateAt      time.Time            `json:"-"`
+	UpdatedAt     time.Time            `json:"-"`
 }
 
 type ProfileUserResponse struct {

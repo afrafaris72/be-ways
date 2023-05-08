@@ -1,4 +1,4 @@
-package projectsdto
+package projectssdto
 
 type ProjectRequest struct {
 	Description string `json:"description"`

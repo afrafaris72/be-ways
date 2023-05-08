@@ -45,7 +45,7 @@ func (r *repository) UpdateProfile(profile models.Profile) (models.Profile, erro
 }
 
 func (r *repository) DeleteProfile(profile models.Profile) (models.Profile, error) {
-	err := r.db.Delete(&profile).Error
+	err := r.db.Delete(&profile).Scan(&profile).Error
 
 	return profile, err
 }

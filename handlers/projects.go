@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -10,6 +9,8 @@ import (
 	dto "waysgallery/dto/result"
 	"waysgallery/models"
 	"waysgallery/repositories"
+
+	"context"
 
 	"github.com/cloudinary/cloudinary-go/v2"
 	"github.com/cloudinary/cloudinary-go/v2/api/uploader"
@@ -29,7 +30,8 @@ func (h *handlerProject) FindProjects(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Get Data Success", Data: projects})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Data for all projects was successfully obtained", Data: projects})
 }
 
 func (h *handlerProject) GetProject(c echo.Context) error {
@@ -40,7 +42,8 @@ func (h *handlerProject) GetProject(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Get Data Success", Data: project})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Project data successfully obtained", Data: project})
 }
 
 func (h *handlerProject) CreateProject(c echo.Context) error {
@@ -58,7 +61,7 @@ func (h *handlerProject) CreateProject(c echo.Context) error {
 
 	var project models.Project
 
-	var cntx = context.Background()
+	var ctx = context.Background()
 	var CLOUD_NAME = os.Getenv("CLOUD_NAME")
 	var API_KEY = os.Getenv("API_KEY")
 	var API_SECRET = os.Getenv("API_SECRET")
@@ -67,49 +70,49 @@ func (h *handlerProject) CreateProject(c echo.Context) error {
 		project.Description = request.Description
 	}
 	if request.Image1 != "" {
-		cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
-		res, err := cloud.Upload.Upload(cntx, filepath[0], uploader.UploadParams{Folder: "waysgallery"})
+		cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+		resp, err := cld.Upload.Upload(ctx, filepath[0], uploader.UploadParams{Folder: "waysgallery"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		project.Image1 = res.SecureURL
-		project.ImagePublicID1 = res.PublicID
+		project.Image1 = resp.SecureURL
+		project.ImagePublicID1 = resp.PublicID
 	}
 	if request.Image2 != "" {
-		cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
-		res, err := cloud.Upload.Upload(cntx, filepath[1], uploader.UploadParams{Folder: "waysgallery"})
+		cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+		resp, err := cld.Upload.Upload(ctx, filepath[1], uploader.UploadParams{Folder: "waysgallery"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		project.Image2 = res.SecureURL
-		project.ImagePublicID2 = res.PublicID
+		project.Image2 = resp.SecureURL
+		project.ImagePublicID2 = resp.PublicID
 	}
 	if request.Image3 != "" {
-		cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
-		res, err := cloud.Upload.Upload(cntx, filepath[2], uploader.UploadParams{Folder: "waysgallery"})
+		cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+		resp, err := cld.Upload.Upload(ctx, filepath[2], uploader.UploadParams{Folder: "waysgallery"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		project.Image3 = res.SecureURL
-		project.ImagePublicID3 = res.PublicID
+		project.Image3 = resp.SecureURL
+		project.ImagePublicID3 = resp.PublicID
 	}
 	if request.Image4 != "" {
-		cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
-		res, err := cloud.Upload.Upload(cntx, filepath[3], uploader.UploadParams{Folder: "waysgallery"})
+		cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+		resp, err := cld.Upload.Upload(ctx, filepath[3], uploader.UploadParams{Folder: "waysgallery"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		project.Image4 = res.SecureURL
-		project.ImagePublicID4 = res.PublicID
+		project.Image4 = resp.SecureURL
+		project.ImagePublicID4 = resp.PublicID
 	}
 	if request.Image5 != "" {
-		cloud, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
-		res, err := cloud.Upload.Upload(cntx, filepath[4], uploader.UploadParams{Folder: "waysgallery"})
+		cld, _ := cloudinary.NewFromParams(CLOUD_NAME, API_KEY, API_SECRET)
+		resp, err := cld.Upload.Upload(ctx, filepath[4], uploader.UploadParams{Folder: "waysgallery"})
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		project.Image5 = res.SecureURL
-		project.ImagePublicID5 = res.PublicID
+		project.Image5 = resp.SecureURL
+		project.ImagePublicID5 = resp.PublicID
 	}
 	project.OrderID = id
 
@@ -117,8 +120,8 @@ func (h *handlerProject) CreateProject(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Create Data Success", Data: convertResponseProject(project)})
 
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Project data created successfully", Data: convertResponseProject(project)})
 }
 
 func convertResponseProject(u models.Project) projectsdto.ProjectResponse {

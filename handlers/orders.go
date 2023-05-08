@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
 	"time"
@@ -11,6 +10,8 @@ import (
 	dto "waysgallery/dto/result"
 	"waysgallery/models"
 	"waysgallery/repositories"
+
+	"net/http"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
@@ -37,7 +38,8 @@ func (h *handlerOrder) FindOrders(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Get All Data Success", Data: orders})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Data for all orders was successfully obtained", Data: orders})
 }
 
 func (h *handlerOrder) GetOrder(c echo.Context) error {
@@ -47,12 +49,13 @@ func (h *handlerOrder) GetOrder(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Get Order Data Success", Data: order})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Order data successfully obtained", Data: order})
 }
 
 func (h *handlerOrder) CreateOrder(c echo.Context) error {
-	StartDateInput, _ := time.Parse("2006-01-01", c.FormValue("start_date"))
-	EndDateInput, _ := time.Parse("2006-01-01", c.FormValue("end_date"))
+	StartDateInput, _ := time.Parse("2006-01-02", c.FormValue("start_date"))
+	EndDateInput, _ := time.Parse("2006-01-02", c.FormValue("end_date"))
 	price, _ := strconv.Atoi(c.FormValue("price"))
 
 	request := ordersdto.OrderRequest{
@@ -62,24 +65,27 @@ func (h *handlerOrder) CreateOrder(c echo.Context) error {
 		EndDate:     EndDateInput,
 		Price:       price,
 	}
+
 	validation := validator.New()
 	err := validation.Struct(request)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	id, _ := strconv.Atoi(c.Param("vendor_id"))
 	userLogin := c.Get("userLogin")
 	userId := userLogin.(jwt.MapClaims)["id"].(float64)
 
-	var orderMatch = false
+	var orderIsMatch = false
 	var orderId int
-	for !orderMatch {
+	for !orderIsMatch {
 		orderId = int(time.Now().Unix())
 		orderData, _ := h.OrderRepository.GetOrder(orderId)
 		if orderData.ID == 0 {
-			orderMatch = true
+			orderIsMatch = true
 		}
 	}
+
 	order := models.Order{
 		ID:          orderId,
 		Title:       request.Title,
@@ -101,6 +107,8 @@ func (h *handlerOrder) CreateOrder(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
 
+	// return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Order data created successfully", Data: convertResponseOrder(data)})
+
 	var s = snap.Client{}
 	s.New(os.Getenv("SERVER_KEY"), midtrans.Sandbox)
 
@@ -118,9 +126,9 @@ func (h *handlerOrder) CreateOrder(c echo.Context) error {
 		},
 	}
 
-	snapRes, _ := s.CreateTransaction(req)
+	snapResp, _ := s.CreateTransaction(req)
 
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Data: snapRes})
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Data: snapResp})
 }
 
 func (h *handlerOrder) UpdateOrderStatus(c echo.Context) error {
@@ -130,6 +138,7 @@ func (h *handlerOrder) UpdateOrderStatus(c echo.Context) error {
 	if err := c.Bind(&request); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
+
 	order, err := h.OrderRepository.GetOrder(id)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
@@ -138,81 +147,87 @@ func (h *handlerOrder) UpdateOrderStatus(c echo.Context) error {
 	if request.Status != "" {
 		order.Status = request.Status
 	}
+
 	order.UpdatedAt = time.Now()
 
 	data, err := h.OrderRepository.UpdateOrderStatus(order)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Update Success", Data: convertResponseOrder(data)})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Order data updated successfully", Data: convertResponseOrder(data)})
 }
 
 func (h *handlerOrder) Notification(c echo.Context) error {
-	var notifPayLoad map[string]interface{}
+	var notificationPayload map[string]interface{}
 
-	if err := c.Bind(&notifPayLoad); err != nil {
+	if err := c.Bind(&notificationPayload); err != nil {
 		return c.JSON(http.StatusBadRequest, dto.ErrorResult{Status: http.StatusBadRequest, Message: err.Error()})
 	}
 
-	transStat := notifPayLoad["transaction_status"].(string)
-	fraudStat := notifPayLoad["fraud_status"].(string)
-	orderId := notifPayLoad["order_id"].(string)
+	transactionStatus := notificationPayload["transaction_status"].(string)
+	fraudStatus := notificationPayload["fraud_status"].(string)
+	orderId := notificationPayload["order_id"].(string)
 
 	order_id, _ := strconv.Atoi(orderId)
 	order, _ := h.OrderRepository.GetOrder(order_id)
-	if transStat == "capture" {
-		if fraudStat == "" {
+	if transactionStatus == "capture" {
+		if fraudStatus == "challenge" {
 			h.OrderRepository.UpdateOrder("cancel", order_id)
-		} else if fraudStat == "accept" {
+		} else if fraudStatus == "accept" {
 			SendMail("waiting", order)
 			h.OrderRepository.UpdateOrder("waiting", order_id)
 		}
-	} else if transStat == "settlement" {
+	} else if transactionStatus == "settlement" {
 		SendMail("waiting", order)
 		h.OrderRepository.UpdateOrder("waiting", order_id)
-	} else if transStat == "deny" {
+	} else if transactionStatus == "deny" {
 		h.OrderRepository.UpdateOrder("cancel", order_id)
-	} else if transStat == "cancel" || transStat == "expire" {
+	} else if transactionStatus == "cancel" || transactionStatus == "expire" {
 		h.OrderRepository.UpdateOrder("cancel", order_id)
-	} else if transStat == "pending" {
+	} else if transactionStatus == "pending" {
 		h.OrderRepository.UpdateOrder("cancel", order_id)
 	}
-	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Payment finished", Data: notifPayLoad})
+
+	return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Payment finished", Data: notificationPayload})
 }
 
-func SendMail(stat string, order models.Order) {
-	if stat != order.Status && (stat == "waiting") {
+func SendMail(status string, order models.Order) {
+
+	if status != order.Status && (status == "waiting") {
 		var CONFIG_SMTP_HOST = "smtp.gmail.com"
 		var CONFIG_SMTP_PORT = 587
-		var CONFIG_SENDER_NAME = "WaysGallery <afra.faris123@gmail.com>"
+		var CONFIG_SENDER_NAME = "WaysGallery <waysgallery.admin@gmail.com>"
 		var CONFIG_AUTH_EMAIL = os.Getenv("EMAIL_SYSTEM")
 		var CONFIG_AUTH_PASSWORD = os.Getenv("PASSWORD_SYSTEM")
 
 		var price = strconv.Itoa(order.Price)
 
-		mail := gomail.NewMessage()
-		mail.SetHeader("From", CONFIG_SENDER_NAME)
-		mail.SetHeader("To", "afra.faris123@gmail.com")
-		mail.SetHeader("Subject", "WaysGallery Payment")
-		mail.SetBody("text/html", fmt.Sprintf(`
-		<html lang="en">
-		  <head>
-		  <title>Document</title>
-		  </head>
-		  <body>
-		  <h2>Product Payment</h2>
-		  <ul style="list-style-type:none;">
-					<li>Title : %s</li>
-					<li>Description : %s</li>
-					<li>Start Date : %s</li>
-					<li>End Date : %s</li>
-					<li>Price : %s</li>
-					<li>Status : %s approvement from vendor</li>
-		  </ul>
-				<h4>&copy; 2023. <a href="https://linkvercel">WaysGallery</a>.</h4>
-		  </body>
-		</html>
-		`, order.Title, order.Description, order.StartDate, order.EndDate, price, stat))
+		mailer := gomail.NewMessage()
+		mailer.SetHeader("From", CONFIG_SENDER_NAME)
+		mailer.SetHeader("To", "mfauzan.murtadho@gmail.com")
+		mailer.SetHeader("Subject", "WaysGallery Order Payment")
+		mailer.SetBody("text/html", fmt.Sprintf(`<!DOCTYPE html>
+    <html lang="en">
+      <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>Document</title>
+      </head>
+      <body>
+      <h2>Product Payment</h2>
+      <ul style="list-style-type:none;">
+				<li>Title : %s</li>
+				<li>Description : %s</li>
+				<li>Start Date : %s</li>
+				<li>End Date : %s</li>
+				<li>Price : %s</li>
+				<li>Status : %s approvement from vendor</li>
+      </ul>
+			<h4>&copy; 2023. <a href="https://waysgallery.vercel.app">WaysGallery</a>.</h4>
+      </body>
+    </html>`, order.Title, order.Description, order.StartDate, order.EndDate, price, status))
 
 		dialer := gomail.NewDialer(
 			CONFIG_SMTP_HOST,
@@ -221,13 +236,12 @@ func SendMail(stat string, order models.Order) {
 			CONFIG_AUTH_PASSWORD,
 		)
 
-		err := dialer.DialAndSend(mail)
+		err := dialer.DialAndSend(mailer)
 		if err != nil {
 			log.Fatal(err.Error())
 		}
 
-		log.Println("Mail Sent to" + CONFIG_AUTH_EMAIL)
-
+		log.Println("Mail sent! to " + CONFIG_AUTH_EMAIL)
 	}
 }
 

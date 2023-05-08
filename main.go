@@ -25,6 +25,7 @@ func main() {
 		AllowMethods: []string{echo.GET, echo.POST, echo.PATCH, echo.DELETE},
 		AllowHeaders: []string{"X-Requested-With", "Content-Type", "Authorization"},
 	}))
+
 	postgresql.DatabaseInit()
 	database.RunMigration()
 
