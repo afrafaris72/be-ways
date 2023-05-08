@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
 	"waysgallery/database"
 	"waysgallery/pkg/postgresql"
 	"waysgallery/routes"
@@ -33,9 +32,9 @@ func main() {
 
 	e.Static("/uploads", "./uploads")
 
-	var port = os.Getenv("PORT")
+	// var port = os.Getenv("PORT")
 
-	fmt.Println("server running localhost:" + port)
-	e.Logger.Fatal(e.Start(":" + port))
+	fmt.Println("server running localhost:")
+	e.Logger.Fatal(e.Start("localhost:5000"))
 
 }
