@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func UploadFile(newfile echo.HandlerFunc) echo.HandlerFunc {
+func UploadFile(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		var method = c.Request().Method
 		file, err := c.FormFile("image")
@@ -17,20 +17,21 @@ func UploadFile(newfile echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			if method == "PATCH" && err.Error() == "http: no such file" {
 				c.Set("dataFile", "")
-				return newfile(c)
+				return next(c)
 			}
 		}
 		if err != nil {
 			if method == "POST" && err.Error() == "http: no such file" {
-				c.Set("datafile", "")
-				return newfile(c)
+				c.Set("dataFile", "")
+				return next(c)
 			}
 		}
+
 		if err != nil {
 			return c.JSON(http.StatusBadRequest, err)
 		}
-		extension := filepath.Ext(file.Filename)
-		if extension == ".png" || extension == ".jpg" || extension == ".jpeg" || extension == ".webp" {
+		ext := filepath.Ext(file.Filename)
+		if ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp" {
 			src, err := file.Open()
 			if err != nil {
 				return c.JSON(http.StatusBadRequest, err)
@@ -50,9 +51,9 @@ func UploadFile(newfile echo.HandlerFunc) echo.HandlerFunc {
 			data := tempFile.Name()
 
 			c.Set("dataFile", data)
-			return newfile(c)
+			return next(c)
 		} else {
-			return c.JSON(http.StatusBadRequest, "File Extension Must Be (.png, .jpg, .jpeg, .webp)")
+			return c.JSON(http.StatusBadRequest, "The file extension is wrong. Allowed file extensions are images (.png, .jpg, .jpeg, .webp)")
 		}
 	}
 }
