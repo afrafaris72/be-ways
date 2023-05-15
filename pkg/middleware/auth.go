@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 	dto "waysgallery/dto/result"
@@ -19,7 +20,8 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 		token = strings.Split(token, " ")[1]
 		claims, err := jwtToken.DecodeToken(token)
 		if err != nil {
-			return c.JSON(http.StatusUnauthorized, dto.ErrorResult{Status: http.StatusUnauthorized, Message: err.Error()})
+			fmt.Println(err)
+			return c.JSON(http.StatusUnauthorized, dto.ErrorResult{Status: http.StatusUnauthorized, Message: "unauthorized"})
 		}
 
 		c.Set("userLogin", claims)

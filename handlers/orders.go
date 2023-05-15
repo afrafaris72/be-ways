@@ -107,8 +107,6 @@ func (h *handlerOrder) CreateOrder(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, dto.ErrorResult{Status: http.StatusInternalServerError, Message: err.Error()})
 	}
 
-	// return c.JSON(http.StatusOK, dto.SuccessResult{Status: http.StatusOK, Message: "Order data created successfully", Data: convertResponseOrder(data)})
-
 	var s = snap.Client{}
 	s.New(os.Getenv("SERVER_KEY"), midtrans.Sandbox)
 
