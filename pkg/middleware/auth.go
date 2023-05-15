@@ -1,12 +1,11 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 	dto "waysgallery/dto/result"
 	jwtToken "waysgallery/pkg/jwt"
-
+	"fmt"
 	"github.com/labstack/echo/v4"
 )
 
